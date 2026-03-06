@@ -1,0 +1,94 @@
+# ─────────────────────────────────────────────────────────────
+# Postman Collection Workflow
+# Runs Postman API tests using Newman and uploads an HTML report
+# as a GitHub Actions artifact after every run.
+# ─────────────────────────────────────────────────────────────
+name: Postman Collection Workflow
+
+# ── TRIGGERS ──────────────────────────────────────────────────
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '30 06 * * *'    # Every day at 8:00 AM IST (02:30 UTC)
+
+# ── JOBS ──────────────────────────────────────────────────────
+jobs:
+  run-postman-tests:
+    runs-on: ubuntu-latest
+    steps:
+
+      # Step 1: Pulls your repository code into the runner
+      - name: Checkout the code
+        uses: actions/checkout@v4
+
+      # Step 2: Sets up Node.js so npm and Newman can be used
+      - name: Install Nodejs and npm
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Step 3: Installs Newman CLI and the HTML + JSON reporters
+      - name: Install Newman and reporters globally
+        run: |
+          npm install -g newman
+          npm install -g newman-reporter-htmlextra
+
+      # Step 4: Runs the Postman collection
+      # -r cli,htmlextra,json → three reporters:
+      #   cli      → prints output to terminal
+      #   htmlextra → saves rich HTML report
+      #   json      → saves raw JSON used for the summary step below
+      - name: Run the Postman Collection with newman
+        run: |
+          newman run Inwarranty-flow-Collection.postman_collection.json \
+          -e QA.postman_environment.json \
+          -r cli,htmlextra,json \
+          --reporter-htmlextra-export newman/report.html \
+          --reporter-json-export newman/report.json
+        continue-on-error: true  # Don't stop here — let summary step always run
+
+      # Step 5: Reads the JSON report and prints a test summary
+      # directly inside the GitHub Actions run page under "Summary"
+      - name: Publish Test Summary
+        if: always()
+        run: |
+          node -e "
+            const fs   = require('fs');
+            const data = JSON.parse(fs.readFileSync('newman/report.json', 'utf8'));
+            const stats = data.run.stats;
+
+            const total  = stats.assertions.total;
+            const passed = stats.assertions.total - stats.assertions.failed;
+            const failed = stats.assertions.failed;
+            const reqs   = stats.requests.total;
+            const reqFail= stats.requests.failed;
+
+            const status = failed === 0 ? '✅ ALL PASSED' : '❌ SOME TESTS FAILED';
+
+            const summary = [
+              '## 🧪 Newman Test Summary',
+              '',
+              '| Metric             | Count |',
+              '|--------------------|-------|',
+              \`| 📦 Total Requests  | \${reqs}   |\`,
+              \`| ❌ Failed Requests | \${reqFail} |\`,
+              \`| 🔢 Total Assertions| \${total}  |\`,
+              \`| ✅ Passed          | \${passed} |\`,
+              \`| ❌ Failed          | \${failed} |\`,
+              '',
+              \`### Result: \${status}\`
+            ].join('\n');
+
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary);
+            console.log(summary);
+          "
+
+      # Step 6: Uploads the HTML report as a downloadable artifact
+      - name: Upload a Newman Run Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Postman Collection Newman Report
+          path: newman/*.html
