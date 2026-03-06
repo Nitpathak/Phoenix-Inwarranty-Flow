@@ -36,6 +36,7 @@ jobs:
                -r cli, htmlextra
 
       - name: Upload a Newman Run Artifact
+        if: always()
         uses: actions/upload-artifact@v7.0.0
         with:
           name: Postman Collection Newman Report
