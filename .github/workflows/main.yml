@@ -1,43 +1,79 @@
+# ─────────────────────────────────────────────────────────────
+# Postman Collection Workflow
+# Runs Postman API tests using Newman and uploads an HTML report
+# as a GitHub Actions artifact after every run.
+# ─────────────────────────────────────────────────────────────
+
 name: Postman Collection Workflow
 
+# ── TRIGGERS ──────────────────────────────────────────────────
+# Defines when this workflow should run
 on:
-  push: 
+
+  # Runs automatically whenever code is pushed to the main branch
+  push:
     branches: [main]
 
-  workflow_dispatch: 
+  # Allows you to manually trigger this workflow from the GitHub UI
+  workflow_dispatch:
+
+  # Scheduled runs using cron syntax (UTC time)
+  # Cron format: minute hour day-of-month month day-of-week
   schedule:
-    - cron: '30 02 * * *' # 8 AM IST everyday
-    - cron: '00 02 * * *' # 7:30 PM IST everyday
-    - cron: '00 06 * * 1-5' # 11:30 AM IST everyday
+    - cron: '30 02 * * *'    # Every day at 8:00 AM IST (02:30 UTC)
+    - cron: '00 14 * * *'    # Every day at 7:30 PM IST (14:00 UTC)
+    - cron: '00 06 * * 1-5'  # Weekdays (Mon–Fri) at 11:30 AM IST (06:00 UTC)
 
-
+# ── JOBS ──────────────────────────────────────────────────────
+# A workflow is made up of one or more jobs
 jobs:
+
+  # Job ID — used to reference this job elsewhere in the workflow
   run-postman-tests:
+
+    # The type of machine to run this job on (GitHub-hosted Ubuntu runner)
     runs-on: ubuntu-latest
 
+    # ── STEPS ───────────────────────────────────────────────
+    # Each step is an individual task that runs in sequence
     steps:
+
+      # Step 1: Pulls your repository code into the runner
+      # so the workflow can access your collection & environment files
       - name: Checkout the code
-        uses: actions/checkout@v5.0.1
+        uses: actions/checkout@v4
 
-      - name: Insatll Nodejs and npm
-        uses: actions/setup-node@v6.3.0
+      # Step 2: Sets up the specified version of Node.js on the runner
+      # Newman is a Node.js tool, so this is required before installing it
+      - name: Install Nodejs and npm
+        uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '22'  # Use Node.js version 22
 
+      # Step 3: Installs Newman (Postman CLI runner) globally
+      # Also installs newman-reporter-htmlextra to generate rich HTML reports
       - name: Install Newman and HTML Extra globally
-        run: | 
-              npm install -g newman
-              npm install -g newman-reporter-htmlextra
+        run: |
+          npm install -g newman                    # Core Newman CLI
+          npm install -g newman-reporter-htmlextra # HTML report generator plugin
 
+      # Step 4: Runs the Postman collection using Newman
+      # -e flag          → specifies the environment file
+      # -r cli,htmlextra → outputs results to terminal (cli) AND as HTML report
+      # --reporter-htmlextra-export → tells Newman WHERE to save the HTML file
       - name: Run the Postman Collection with newman
         run: |
-               newman run Inwarranty-flow-Collection.postman_collection.json \
-               -e QA.postman_environment.json \
-               -r cli,htmlextra
+          newman run Inwarranty-flow-Collection.postman_collection.json \
+          -e QA.postman_environment.json \
+          -r cli,htmlextra \
+          --reporter-htmlextra-export newman/report.html
 
+      # Step 5: Uploads the generated HTML report as a GitHub Actions artifact
+      # if: always() → ensures this step runs even if the tests fail,
+      # so you can always download and inspect the report regardless of outcome
       - name: Upload a Newman Run Artifact
         if: always()
-        uses: actions/upload-artifact@v7.0.0
+        uses: actions/upload-artifact@v4
         with:
-          name: Postman Collection Newman Report
-          path: newman/*.html
+          name: Postman Collection Newman Report  # Name shown in GitHub Actions UI
+          path: newman/*.html                     # Path to the generated HTML report
