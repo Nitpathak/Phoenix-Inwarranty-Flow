@@ -33,7 +33,7 @@ jobs:
         run: |
                newman run Inwarranty-flow-Collection.postman_collection.json \
                -e QA.postman_environment.json \
-               -r cli, htmlextra
+               -r cli,htmlextra
 
       - name: Upload a Newman Run Artifact
         if: always()
@@ -41,10 +41,3 @@ jobs:
         with:
           name: Postman Collection Newman Report
           path: newman/*.html
-               
-               
-               
-        
-          
-        
-    
