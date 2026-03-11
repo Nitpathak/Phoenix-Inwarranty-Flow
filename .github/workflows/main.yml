@@ -78,6 +78,12 @@ jobs:
           name: Postman Collection Newman Report  # Name shown in GitHub Actions UI
           path: newman/*.html                     # Path to the generated HTML report
 
+      # Step 6: Deploys the HTML report to GitHub Pages so it's accessible via a public URL
+      # if: always() → ensures deployment happens even when tests fail,
+      # guaranteeing the latest report is always available online
+      # peaceiris/actions-gh-pages → a popular action that pushes files to the gh-pages branch
+      # github_token  → uses the built-in repo token for authentication (no manual setup needed)
+      # publish_dir   → the local folder whose contents will be published to GitHub Pages
       - name: Creating github page branch
         if: always()
         uses: peaceiris/actions-gh-pages@v4.0.0
@@ -85,6 +91,14 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: newman/
 
+      # Step 7: Sends an email notification with a link to the live GitHub Pages report
+      # if: always() → ensures the email is sent regardless of test pass/fail outcome,
+      # so stakeholders are always informed of the latest results
+      # dawidd6/action-send-mail → a widely-used action for sending emails via SMTP
+      # server_address/port → uses Gmail's SMTP server on SSL port 465
+      # username/password   → pulled from GitHub Secrets to keep credentials secure
+      # NOTE: password must be a Gmail App Password, NOT your regular Gmail password
+      # attachments (commented out) → can be re-enabled to attach the HTML file directly
       - name: Send Email Github Notification
         if: always()
         uses: dawidd6/action-send-mail@v13
