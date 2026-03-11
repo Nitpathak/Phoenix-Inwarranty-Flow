@@ -111,10 +111,17 @@ jobs:
           to: nitin.kr.pathak@gmail.com
           from: Nitin from GitHub Actions <${{ secrets.EMAIL_USERNAME }}>
           body: |
-              Hello,
-              Please find the attached HTML report generated after running the Postman tests via
-              GitHub Actions.
-              Link to live report (GitHub Pages): https://nitpathak.github.io/Phoenix-Inwarranty-Flow/
-              Regards,
-              GitHub Actions
+              Hey Team! 👋
+              Your API tests just finished running — here's the latest scoop! 🚀
+              Check out the full report here: 
+              👉 https://nitpathak.github.io/Phoenix-Inwarranty-Flow/
+              ✅ All results are in — tap the link above for a full breakdown of
+              what passed, what failed, and what needs your attention.
+
+              This is an automated notification from your CI/CD pipeline.
+              
+              Catch you on the next run! 😄
+              — GitHub Actions Bot 🤖
+              Phoenix Inwarranty QA Pipeline
+
           #attachments: newman/index.html
