@@ -79,7 +79,7 @@ jobs:
           path: newman/*.html                     # Path to the generated HTML report
 
       - name: Creating github page branch
-        if always()
+        if: always()
         uses: peaceiris/actions-gh-pages@v4.0.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
