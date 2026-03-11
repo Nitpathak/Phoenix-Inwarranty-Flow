@@ -66,7 +66,7 @@ jobs:
           newman run Inwarranty-flow-Collection.postman_collection.json \
           -e QA.postman_environment.json \
           -r cli,htmlextra \
-          --reporter-htmlextra-export newman/report.html
+          --reporter-htmlextra-export ./newman/index.html
 
       # Step 5: Uploads the generated HTML report as a GitHub Actions artifact
       # if: always() → ensures this step runs even if the tests fail,
