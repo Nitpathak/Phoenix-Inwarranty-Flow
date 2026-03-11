@@ -103,4 +103,4 @@ jobs:
               Link to live report (GitHub Pages): https://nitpathak.github.io/Phoenix-Inwarranty-Flow/
               Regards,
               GitHub Actions
-          attachments: newman/index.html
+          #attachments: newman/index.html
